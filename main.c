@@ -13,6 +13,11 @@ const int screenHeight = 600;
 const int cellWidth = screenWidth / COLS;
 const int cellHeight = screenHeight / ROWS;
 
+const char* youLose = "YOU LOSE!";
+const char* youWin = "YOU WIN!";
+const char *pressRToRestart = "Press r to play again.";
+
+
 typedef struct Cell {
   int i;
   int j;
@@ -26,48 +31,28 @@ Cell grid[COLS][ROWS];
 
 Texture2D flagSprite;
 
+typedef enum GameState {
+  PLAYING,
+  LOSE,
+  WIN
+} GameState; 
+
+GameState state = PLAYING;
+
 void CellDraw(Cell);
 bool IndexIsValid(int, int);
 void CellReveal(int, int);
 void CellFlag(int, int);
 int CellCountMines(int,int);
+void GridInit(void);
+void GridFloodClearFrom(int, int);
 
 int main() {
   srand(time(0));
   InitWindow(screenWidth, screenHeight, "basic window");
   flagSprite = LoadTexture("resources/flag.png");
   
-  for (int i = 0; i < COLS; i++) {
-    for (int j = 0; j < ROWS; j++) {
-      grid[i][j] = (Cell) {
-        .i = i,
-        .j = j,
-        .containsMine = false,
-        .revealed = false,
-        .flagged = false,
-        .nearbyMines = -1
-      };
-    }
-  }
-
-  int minesToPlace = (int)(ROWS * COLS * 0.1f);
-  while(minesToPlace > 0) {
-    int i = rand() % COLS;
-    int j = rand() % ROWS;
-
-    if(!grid[i][j].containsMine) {
-      grid[i][j].containsMine = true;
-      minesToPlace--;
-    }
-  }
-
-  for (int i = 0; i < COLS; i++) {
-    for (int j = 0; j < ROWS; j++) {
-      if(!grid[i][j].containsMine){
-        grid[i][j].nearbyMines = CellCountMines(i,j);
-      }
-    }
-  }
+  GridInit();
 
   while(!WindowShouldClose()) {
 
@@ -76,7 +61,7 @@ int main() {
       int indexI = mPos.x / cellWidth;
       int indexJ = mPos.y / cellHeight;
 
-      if (IndexIsValid(indexI, indexJ)){
+      if (state = PLAYING && IndexIsValid(indexI, indexJ)){
         CellReveal(indexI,indexJ);
       }
     } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -95,6 +80,17 @@ int main() {
         for (int j = 0; j < ROWS; j++) {
           CellDraw(grid[i][j]);
         }
+      }
+      if(state = LOSE){
+        DrawRectangle(0,0,screenWidth,screenHeight,WHITE);
+        DrawText(youLose,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
+        DrawText(pressRToRestart,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);//add adjustment to height
+
+      }
+      if(state = WIN){
+        DrawRectangle(0,0,screenWidth,screenHeight,WHITE);
+        DrawText(youWin,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
+        DrawText(pressRToRestart,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY); //add adjustment to height
       }
     EndDrawing();
   } 
@@ -136,11 +132,24 @@ void CellReveal(int i, int j) {
   }
   grid[i][j].revealed = true;
 
+  // if (grid[i][j].revealed && grid[i][j].nearbyMines == 0)
+  // {
+  //   TraceLog(LOG_INFO,"asdfasdfa %d",grid[i][j].nearbyMines,"asdf %d",grid[i][j].j);
+  //   for (int ii = 0; ii < grid[i][j].i; ii++)
+  //   {
+  //     DrawRectangle( grid[i][j] * cellWidth, grid[i][j].j *cellHeight, cellWidth, cellHeight, LIGHTGRAY);
+  //   }
+  // }
+  
+
   if(grid[i][j].containsMine){
     //lose
   } 
   else {
     //play sound
+    if(grid[i][j].nearbyMines == 0){
+      GridFloodClearFrom(i,j);
+    }
   }
 }
 
@@ -171,4 +180,57 @@ int CellCountMines(int i, int j){
   }
 
     return count;
+}
+
+void GridInit(void){
+  for (int i = 0; i < COLS; i++) {
+    for (int j = 0; j < ROWS; j++) {
+      grid[i][j] = (Cell) {
+        .i = i,
+        .j = j,
+        .containsMine = false,
+        .revealed = false,
+        .flagged = false,
+        .nearbyMines = -1
+      };
+    }
+  }
+
+  int minesToPlace = (int)(ROWS * COLS * 0.1f);
+  while(minesToPlace > 0) {
+    int i = rand() % COLS;
+    int j = rand() % ROWS;
+
+    if(!grid[i][j].containsMine) {
+      grid[i][j].containsMine = true;
+      minesToPlace--;
+    }
+  }
+
+  for (int i = 0; i < COLS; i++) {
+    for (int j = 0; j < ROWS; j++) {
+      if(!grid[i][j].containsMine){
+        grid[i][j].nearbyMines = CellCountMines(i,j);
+      }
+    }
+  }
+}
+
+void GridFloodClearFrom(int i, int j){
+  for (int iOff = -1; iOff <= 1; iOff++) {
+    for (int jOff = -1; jOff <= 1; jOff++) {
+
+      if (iOff == 0 && jOff == 0) {
+        continue;
+      }
+
+      if(!IndexIsValid(i + iOff, j + jOff)){
+        continue;
+      }
+
+      if (!grid[i + iOff][j + jOff].revealed) {
+        CellReveal(i +iOff,j+jOff);
+      }
+    }
+  }
 }
