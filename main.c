@@ -18,19 +18,24 @@ typedef struct Cell {
   int j;
   bool containsMine;
   bool revealed;
+  bool flagged;
   int nearbyMines;
 } Cell;
 
 Cell grid[COLS][ROWS];
 
+Texture2D flagSprite;
+
 void CellDraw(Cell);
 bool IndexIsValid(int, int);
 void CellReveal(int, int);
+void CellFlag(int, int);
 int CellCountMines(int,int);
 
 int main() {
   srand(time(0));
   InitWindow(screenWidth, screenHeight, "basic window");
+  flagSprite = LoadTexture("resources/flag.png");
   
   for (int i = 0; i < COLS; i++) {
     for (int j = 0; j < ROWS; j++) {
@@ -39,6 +44,7 @@ int main() {
         .j = j,
         .containsMine = false,
         .revealed = false,
+        .flagged = false,
         .nearbyMines = -1
       };
     }
@@ -73,6 +79,14 @@ int main() {
       if (IndexIsValid(indexI, indexJ)){
         CellReveal(indexI,indexJ);
       }
+    } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        Vector2 mPos = GetMousePosition();
+        int indexI = mPos.x / cellWidth;
+        int indexJ = mPos.y / cellHeight;
+
+        if (IndexIsValid(indexI, indexJ)){
+          CellFlag(indexI,indexJ);
+        }
     }
 
     BeginDrawing();
@@ -102,6 +116,13 @@ void CellDraw(Cell cell) {
       }
     }
   }
+  else if(cell.flagged) {
+    Rectangle source = {0,0,flagSprite.width, flagSprite.height};
+    Rectangle dest = {cell.i * cellWidth, cell.j *cellHeight, cellWidth, cellHeight};
+    Vector2 origin = {0,0};
+
+    DrawTexturePro(flagSprite, source,dest,origin,0.0f, WHITE);
+  }
   DrawRectangleLines( cell.i * cellWidth, cell.j *cellHeight, cellWidth, cellHeight, BLACK);
 }
 
@@ -110,6 +131,9 @@ bool IndexIsValid(int i, int j) {
 }
 
 void CellReveal(int i, int j) {
+  if(grid[i][j].flagged){
+    return;
+  }
   grid[i][j].revealed = true;
 
   if(grid[i][j].containsMine){
@@ -118,6 +142,13 @@ void CellReveal(int i, int j) {
   else {
     //play sound
   }
+}
+
+void CellFlag(int i, int j) {
+  if(grid[i][j].revealed){
+    return;
+  }
+  grid[i][j].flagged = !grid[i][j].flagged;
 }
 
 int CellCountMines(int i, int j){
