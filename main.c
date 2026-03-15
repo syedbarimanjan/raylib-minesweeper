@@ -54,11 +54,18 @@ void GridFloodClearFrom(int, int);
 void GameInit(void);
 
 int main() {
+
+  // int screenWidthd = 1000;
+  // int screenHeightd = 1000;
   srand(time(0));
-  InitWindow(screenWidth, screenHeight, "basic window");
+  // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(screenWidth, screenHeight, "Minesweeper");
   flagSprite = LoadTexture("resources/flag.png");
   
   GameInit();
+
+  // screenWidthd = GetScreenWidth();
+  // screenHeightd = GetScreenHeight();
 
   while(!WindowShouldClose()) {
 
@@ -84,8 +91,11 @@ int main() {
       GameInit();
     }
 
+    SetTargetFPS(144);
+
     BeginDrawing();
       ClearBackground(RAYWHITE);
+      DrawFPS(10,10);
       for (int i = 0; i < COLS; i++) {
         for (int j = 0; j < ROWS; j++) {
           CellDraw(grid[i][j]);
