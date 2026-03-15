@@ -7,8 +7,8 @@
 #define COLS 10
 #define ROWS 10
 
-const int screenWidth = 600;
-const int screenHeight = 600;
+const int screenWidth = 1000;
+const int screenHeight = 1000;
 
 const int cellWidth = screenWidth / COLS;
 const int cellHeight = screenHeight / ROWS;
@@ -94,13 +94,20 @@ int main() {
       if(state == LOSE){
         DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
         DrawText(youLose,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
-        DrawText(pressRToRestart,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY);
+        DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY);
 
+        int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
+        int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
+        DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
       }
       if(state == WIN){
         DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
         DrawText(youWin,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
-        DrawText(pressRToRestart,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY); 
+        DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY); 
+
+        int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
+        int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
+        DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
       }
     EndDrawing();
   } 
@@ -145,6 +152,7 @@ void CellReveal(int i, int j) {
 
   if(grid[i][j].containsMine){
     state = LOSE;
+    timeGameEnded = GetTime();
   } 
   else {
     //play sound
@@ -154,6 +162,7 @@ void CellReveal(int i, int j) {
     tilesRevealed++;
     if(tilesRevealed >= ROWS * COLS - minesPresent){
       state = WIN;
+      timeGameEnded = GetTime();
     }
   }
 }
@@ -244,4 +253,5 @@ void GameInit(void){
  GridInit();
  state = PLAYING;
  tilesRevealed = 0;
+ timeGameStarted = GetTime();
 }
