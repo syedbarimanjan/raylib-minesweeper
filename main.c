@@ -4,15 +4,6 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#define COLS 10
-#define ROWS 10
-
-const int screenWidth = 1000;
-const int screenHeight = 1000;
-
-const int cellWidth = screenWidth / COLS;
-const int cellHeight = screenHeight / ROWS;
-
 const char* youLose = "YOU LOSE!";
 const char* youWin = "YOU WIN!";
 const char* pressRToRestart = "Press r to play again.";
@@ -27,7 +18,6 @@ typedef struct Cell {
   int nearbyMines;
 } Cell;
 
-Cell grid[COLS][ROWS];
 
 Texture2D flagSprite;
 int tilesRevealed;
@@ -44,28 +34,35 @@ GameState state;
 float timeGameStarted;
 float timeGameEnded;
 
-void CellDraw(Cell);
-bool IndexIsValid(int, int);
-void CellReveal(int, int);
-void CellFlag(int, int);
-int CellCountMines(int,int);
-void GridInit(void);
-void GridFloodClearFrom(int, int);
-void GameInit(void);
+void CellDraw(Cell cell, int cellWidth, int cellHeight);
+bool IndexIsValid(int i, int j, int COLS, int ROWS);
+void CellReveal(int i, int j,int COLS, int ROWS, Cell grid[COLS][ROWS]);
+void CellFlag(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
+int CellCountMines(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
+void GridInit(int COLS, int ROWS, Cell grid[COLS][ROWS]);
+void GridFloodClearFrom(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
+void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS]);
 
 int main() {
 
-  // int screenWidthd = 1000;
-  // int screenHeightd = 1000;
+  int COLS = 10;
+  int ROWS = 10;
+
+  int screenWidth = 1000;
+  int screenHeight = 1000;
+
+  int cellWidth = screenWidth / COLS;
+  int cellHeight = screenHeight / ROWS;
+
+  Cell grid[COLS][ROWS];
+
+
   srand(time(0));
-  // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(screenWidth, screenHeight, "Minesweeper");
   flagSprite = LoadTexture("resources/flag.png");
   
-  GameInit();
+  GameInit(COLS,ROWS,grid);
 
-  // screenWidthd = GetScreenWidth();
-  // screenHeightd = GetScreenHeight();
 
   while(!WindowShouldClose()) {
 
@@ -74,21 +71,21 @@ int main() {
       int indexI = mPos.x / cellWidth;
       int indexJ = mPos.y / cellHeight;
 
-      if (state == PLAYING && IndexIsValid(indexI, indexJ)){
-        CellReveal(indexI,indexJ);
+      if (state == PLAYING && IndexIsValid(indexI, indexJ,COLS,ROWS)){
+        CellReveal(indexI,indexJ, COLS, ROWS, grid);
       }
     } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         Vector2 mPos = GetMousePosition();
         int indexI = mPos.x / cellWidth;
         int indexJ = mPos.y / cellHeight;
 
-        if (state == PLAYING && IndexIsValid(indexI, indexJ)){
-          CellFlag(indexI,indexJ);
+        if (state == PLAYING && IndexIsValid(indexI, indexJ,COLS,ROWS)){
+          CellFlag(indexI,indexJ,COLS,ROWS,grid);
         }
     }
 
     if(IsKeyPressed(KEY_R)){
-      GameInit();
+      GameInit(COLS,ROWS,grid);
     }
 
     SetTargetFPS(144);
@@ -98,7 +95,7 @@ int main() {
       DrawFPS(10,10);
       for (int i = 0; i < COLS; i++) {
         for (int j = 0; j < ROWS; j++) {
-          CellDraw(grid[i][j]);
+          CellDraw(grid[i][j],cellWidth,cellHeight);
         }
       }
       if(state == LOSE){
@@ -127,7 +124,7 @@ int main() {
   return 0;
 }
 
-void CellDraw(Cell cell) {
+void CellDraw(Cell cell, int cellWidth, int cellHeight) {
   if(cell.revealed){
     if(cell.containsMine){
       DrawRectangle( cell.i * cellWidth, cell.j *cellHeight, cellWidth, cellHeight, RED);
@@ -149,11 +146,11 @@ void CellDraw(Cell cell) {
   DrawRectangleLines( cell.i * cellWidth, cell.j *cellHeight, cellWidth, cellHeight, BLACK);
 }
 
-bool IndexIsValid(int i, int j) {
+bool IndexIsValid(int i, int j, int COLS, int ROWS) {
   return i >= 0 && i < COLS && j >= 0 && j < ROWS;
 }
 
-void CellReveal(int i, int j) {
+void CellReveal(int i, int j,int COLS, int ROWS, Cell grid[COLS][ROWS]) {
   if(grid[i][j].flagged){ //|| grid[i][j].revealed
     return;
   }
@@ -167,7 +164,7 @@ void CellReveal(int i, int j) {
   else {
     //play sound
     if(grid[i][j].nearbyMines == 0){
-      GridFloodClearFrom(i,j);
+      GridFloodClearFrom(i,j,COLS,ROWS,grid);
     }
     tilesRevealed++;
     if(tilesRevealed >= ROWS * COLS - minesPresent){
@@ -177,14 +174,14 @@ void CellReveal(int i, int j) {
   }
 }
 
-void CellFlag(int i, int j) {
+void CellFlag(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]) {
   if(grid[i][j].revealed){
     return;
   }
   grid[i][j].flagged = !grid[i][j].flagged;
 }
 
-int CellCountMines(int i, int j){
+int CellCountMines(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]){
   int count = 0;
   for (int iOff = -1; iOff <= 1; iOff++) {
     for (int jOff = -1; jOff <= 1; jOff++) {
@@ -193,7 +190,7 @@ int CellCountMines(int i, int j){
         continue;
       }
 
-      if(!IndexIsValid(i + iOff, j + jOff)){
+      if(!IndexIsValid(i + iOff, j + jOff,COLS,ROWS)){
         continue;
       }
 
@@ -206,7 +203,7 @@ int CellCountMines(int i, int j){
     return count;
 }
 
-void GridInit(void){
+void GridInit(int COLS, int ROWS, Cell grid[COLS][ROWS]){
   for (int i = 0; i < COLS; i++) {
     for (int j = 0; j < ROWS; j++) {
       grid[i][j] = (Cell) {
@@ -234,13 +231,13 @@ void GridInit(void){
   for (int i = 0; i < COLS; i++) {
     for (int j = 0; j < ROWS; j++) {
       if(!grid[i][j].containsMine){
-        grid[i][j].nearbyMines = CellCountMines(i,j);
+        grid[i][j].nearbyMines = CellCountMines(i,j,COLS,ROWS,grid);
       }
     }
   }
 }
 
-void GridFloodClearFrom(int i, int j){
+void GridFloodClearFrom(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]){
   for (int iOff = -1; iOff <= 1; iOff++) {
     for (int jOff = -1; jOff <= 1; jOff++) {
 
@@ -248,19 +245,19 @@ void GridFloodClearFrom(int i, int j){
         continue;
       }
 
-      if(!IndexIsValid(i + iOff, j + jOff)){
+      if(!IndexIsValid(i + iOff, j + jOff,COLS,ROWS)){
         continue;
       }
 
       if (!grid[i + iOff][j + jOff].revealed) {
-        CellReveal(i +iOff,j+jOff);
+        CellReveal(i +iOff,j+jOff,COLS,ROWS,grid);
       }
     }
   }
 }
 
-void GameInit(void){
- GridInit();
+void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS]){
+ GridInit( COLS, ROWS,grid);
  state = PLAYING;
  tilesRevealed = 0;
  timeGameStarted = GetTime();
