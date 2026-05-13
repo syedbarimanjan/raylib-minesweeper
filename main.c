@@ -41,7 +41,7 @@ void CellFlag(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
 int CellCountMines(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
 void GridInit(int COLS, int ROWS, Cell grid[COLS][ROWS]);
 void GridFloodClearFrom(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS]);
-void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS]);
+void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS], int flaggedCells);
 
 int main() {
 
@@ -56,14 +56,15 @@ int main() {
 
   Cell grid[COLS][ROWS];
 
-
+  
   srand(time(0));
   InitWindow(screenWidth, screenHeight, "Minesweeper");
   flagSprite = LoadTexture("resources/flag.png");
   
-  GameInit(COLS,ROWS,grid);
-
-
+  int flaggedCells = 0;
+  GameInit(COLS,ROWS,grid,flaggedCells);
+  
+  
   while(!WindowShouldClose()) {
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -81,41 +82,44 @@ int main() {
 
         if (state == PLAYING && IndexIsValid(indexI, indexJ,COLS,ROWS)){
           CellFlag(indexI,indexJ,COLS,ROWS,grid);
+          flaggedCells += 1;
         }
     }
 
     if(IsKeyPressed(KEY_R)){
-      GameInit(COLS,ROWS,grid);
+      flaggedCells = 0;
+      GameInit(COLS,ROWS,grid,flaggedCells);
     }
 
     SetTargetFPS(144);
 
     BeginDrawing();
-      ClearBackground(RAYWHITE);
-      DrawFPS(10,10);
-      for (int i = 0; i < COLS; i++) {
-        for (int j = 0; j < ROWS; j++) {
-          CellDraw(grid[i][j],cellWidth,cellHeight);
-        }
+    ClearBackground(RAYWHITE);
+    DrawFPS(10,10);
+    for (int i = 0; i < COLS; i++) {
+      for (int j = 0; j < ROWS; j++) {
+        CellDraw(grid[i][j],cellWidth,cellHeight);
       }
-      if(state == LOSE){
-        DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
-        DrawText(youLose,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
-        DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY);
-
-        int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
-        int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
-        DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
-      }
-      if(state == WIN){
-        DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
-        DrawText(youWin,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
-        DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY); 
-
-        int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
-        int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
-        DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
-      }
+    }
+    DrawText(TextFormat("Cells Flagged : %d", flaggedCells),screenWidth-270,10,30,DARKGREEN);
+    if(state == LOSE){
+      DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
+      DrawText(youLose,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
+      DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY);
+      
+      int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
+      int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
+      DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
+    }
+    if(state == WIN){
+      DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
+      DrawText(youWin,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
+      DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY); 
+      
+      int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
+      int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
+      DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
+    }
     EndDrawing();
   } 
     
@@ -256,9 +260,10 @@ void GridFloodClearFrom(int i, int j, int COLS, int ROWS, Cell grid[COLS][ROWS])
   }
 }
 
-void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS]){
+void GameInit(int COLS, int ROWS, Cell grid[COLS][ROWS],int flaggedCells){
  GridInit( COLS, ROWS,grid);
  state = PLAYING;
  tilesRevealed = 0;
  timeGameStarted = GetTime();
+ flaggedCells = 0;
 }
