@@ -6,7 +6,7 @@
 
 const char* youLose = "YOU LOSE!";
 const char* youWin = "YOU WIN!";
-const char* pressRToRestart = "Press r to play again.";
+const char* pressRToRestart = "Press s to play again.";
 
 
 typedef struct Cell {
@@ -82,11 +82,15 @@ int main() {
 
         if (state == PLAYING && IndexIsValid(indexI, indexJ,COLS,ROWS)){
           CellFlag(indexI,indexJ,COLS,ROWS,grid);
-          flaggedCells += 1;
+          if(grid[indexI][indexJ].flagged){
+            flaggedCells += 1;
+          }else{
+            flaggedCells -= 1;
+          }
         }
     }
 
-    if(IsKeyPressed(KEY_R)){
+    if(IsKeyPressed(KEY_S)){
       flaggedCells = 0;
       GameInit(COLS,ROWS,grid,flaggedCells);
     }
