@@ -6,7 +6,7 @@
 
 const char* youLose = "YOU LOSE!";
 const char* youWin = "YOU WIN!";
-const char* pressRToRestart = "Press s to play again.";
+const char* pressRToRestart = "Press s to play again or this button.";
 
 
 typedef struct Cell {
@@ -66,6 +66,9 @@ int main() {
   
   
   while(!WindowShouldClose()) {
+    Vector2 mouseposition = GetMousePosition();
+
+    
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
       Vector2 mPos = GetMousePosition();
@@ -109,6 +112,18 @@ int main() {
     if(state == LOSE){
       DrawRectangle(0,0,screenWidth,screenHeight,Fade(WHITE,0.8f));
       DrawText(youLose,screenWidth/2 - MeasureText(youLose, 20) / 2,screenHeight/2 - 10 ,20, DARKGRAY);
+      Rectangle startButton = {screenWidth/2 - MeasureText(pressRToRestart, 20) / 2 - 10,screenHeight * 0.75f - 10 ,400,20};
+      Color startButtonColor = Fade(GRAY,0.8f);
+      bool isHover = CheckCollisionPointRec(mouseposition,startButton);
+      if(isHover){
+        startButtonColor = GREEN;
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+          GameInit(COLS,ROWS,grid,flaggedCells);
+        }else{
+          startButtonColor = Fade(GRAY,0.8f);
+        }
+      }
+      DrawRectangleRec(startButton,startButtonColor);
       DrawText(pressRToRestart,screenWidth/2 - MeasureText(pressRToRestart, 20) / 2,screenHeight * 0.75f - 10 ,20, DARKGRAY);
       
       int minutes = (int)(timeGameEnded - timeGameStarted) / 60;
@@ -124,6 +139,7 @@ int main() {
       int seconds = (int)(timeGameEnded - timeGameStarted) % 60;
       DrawText(TextFormat("Time played: %d minutes, %d seconds.", minutes,seconds), 20,screenHeight-40,20,DARKGRAY);
     }
+
     EndDrawing();
   } 
     
